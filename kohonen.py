@@ -16,10 +16,9 @@ import numpy
 import matplotlib.pyplot as plt
 
 
-
 class Neuron:
   ''' Classe représentant un neurone '''
-  
+
   def __init__(self, w, posx, posy):
     '''
     @summary: Création d'un neurone
@@ -36,7 +35,7 @@ class Neuron:
     self.posx = posx
     self.posy = posy
     # Initialisation de la sortie du neurone
-    self.y = 0
+    self.y = 0.
   
   def compute(self,x):
     '''
@@ -45,7 +44,8 @@ class Neuron:
     @type x: numpy array
     '''
     # TODO
-    self.y = numpy.linalg.norm(x-self.weights)
+    #self.y = numpy.linalg.norm(x-self.weights)
+    self.y = numpy.hypot(*(self.weights - x))
 
   def learn(self, eta, sigma, posxbmu, posybmu, x):
     '''
@@ -63,7 +63,11 @@ class Neuron:
     '''
     # TODO (attention à ne pas changer la partie à gauche du =)
     v = numpy.exp(-(numpy.linalg.norm(numpy.array([self.posx, self.posy])-numpy.array([posxbmu, posybmu]))*2)/(2*numpy.power(sigma, 2)))
+    #self.moyenne.append(v)
     self.weights[:] = self.weights + eta * v * (x-self.weights)
+    #self.weights[:] = self.weights \
+    #                  + eta * numpy.exp(-(numpy.hypot(*([self.posx - posxbmu, self.posy - posybmu])) ** 2) / (2 * sigma ** 2)) \
+    #                  * numpy.array([x[0] - self.weights[0], x[1] - self.weights[1]])
 
 
 class SOM:
@@ -130,8 +134,6 @@ class SOM:
     for posx in range(self.gridsize[0]):
       for posy in range(self.gridsize[1]):
         self.map[posx][posy].learn(eta,sigma,bmux,bmuy,x)
-
-        
       
 
   def scatter_plot(self,interactive=False):
@@ -241,6 +243,18 @@ class SOM:
     # On renvoie l'erreur de quantification vectorielle moyenne
     return s/nsamples
 
+  '''def MDN(self):
+
+    @Summary: Clacile la distance moyenne entre deux neuronnes voisins
+    @param: aucun
+    @return: La distance moyenne entre deux neuronnes.
+
+    m = 0
+    for i in moyenne:
+       m += i
+    moyenne = []
+    return m'''
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
   # Création d'un réseau avec une entrée (2,1) et une carte (10,10)
@@ -263,7 +277,7 @@ if __name__ == '__main__':
   # TODO décommenter les données souhaitées
   nsamples = 1200
   # Ensemble de données 1
-  samples = numpy.random.random((nsamples,2,1))*2-1
+#  samples = numpy.random.random((nsamples,2,1))*2-1
   # Ensemble de données 2
 #  samples1 = -numpy.random.random((nsamples//3,2,1))
 #  samples2 = numpy.random.random((nsamples//3,2,1))
@@ -277,13 +291,19 @@ if __name__ == '__main__':
 #  samples2 = numpy.random.random((nsamples//2,2,1))
 #  samples2[:,1,:] -= 1
 #  samples = numpy.concatenate((samples1,samples2))
+  # Ensemble de données sup
+#  samples1 = -numpy.random.random((nsamples // 2, 2, 1))
+#  samples1[:,0,:] -= 1
+#  samples2 = -numpy.random.random((nsamples//2,2,1))
+#  samples2[:,1,:] -= 1
+#  samples = numpy.concatenate((samples1,samples2))
   # Ensemble de données robotiques
-#  samples = numpy.random.random((nsamples,4,1))
-#  samples[:,0:2,:] *= numpy.pi
-#  l1 = 0.7
-#  l2 = 0.3
-#  samples[:,2,:] = l1*numpy.cos(samples[:,0,:])+l2*numpy.cos(samples[:,0,:]+samples[:,1,:])
-#  samples[:,3,:] = l1*numpy.sin(samples[:,0,:])+l2*numpy.sin(samples[:,0,:]+samples[:,1,:])
+  samples = numpy.random.random((nsamples,4,1))
+  samples[:,0:2,:] *= numpy.pi
+  l1 = 0.7
+  l2 = 0.3
+  samples[:,2,:] = l1*numpy.cos(samples[:,0,:])+l2*numpy.cos(samples[:,0,:]+samples[:,1,:])
+  samples[:,3,:] = l1*numpy.sin(samples[:,0,:])+l2*numpy.sin(samples[:,0,:]+samples[:,1,:])
   # Affichage des données (pour les ensembles 1, 2 et 3)
   plt.figure()
   plt.scatter(samples[:,0,0], samples[:,1,0])
@@ -330,12 +350,20 @@ if __name__ == '__main__':
       # Affichage du contenu de la figure
       plt.pause(0.00001)
       plt.draw()
+    #network.MDN()
   # Fin de l'affichage interactif
   if VERBOSE:
     # Désactivation du mode interactif
     plt.ioff()
   # Affichage des poids du réseau
   network.plot()
+  # Effacement du contenu de la figure
+  plt.clf()
+  # Remplissage de la figure
+  # TODO à remplacer par scatter_plot_2 pour les données robotiques
+  network.scatter_plot(True)
+  # Affichage du contenu de la figure
+  plt.pause(0.00001)
+  plt.draw()
   # Affichage de l'erreur de quantification vectorielle moyenne après apprentissage
   print("erreur de quantification vectorielle moyenne ",network.MSE(samples))
-
